@@ -9,8 +9,11 @@
     <style>
         :root {
             --bg-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2064&auto=format&fit=crop'); /* Vibrant blue abstract curves */
-            --mica-bg: rgba(243, 243, 243, 0.75);
-            --mica-bg-dark: rgba(32, 32, 32, 0.75);
+            --bg-color: #0067c0;
+            --win-rgb: 255, 255, 255;
+            --taskbar-rgb: 243, 243, 243;
+            --ui-alpha: 1;
+            --taskbar-alpha: 0.85;
             --mica-blur: 20px;
             --accent: #0067c0;
             --accent-dark: #005a9e;
@@ -24,7 +27,11 @@
             margin: 0;
             overflow: hidden;
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-            background: var(--bg-image) no-repeat center center fixed;
+            background-image: var(--bg-image);
+            background-color: var(--bg-color);
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             background-size: cover;
             color: var(--text-dark);
             user-select: none;
@@ -33,13 +40,19 @@
 
         .dark-mode {
             color: var(--text-light);
-            --mica-bg: var(--mica-bg-dark);
+            --win-rgb: 32, 32, 32;
+            --taskbar-rgb: 32, 32, 32;
             --border-light: var(--border-dark);
+        }
+        
+        .transparent-mode {
+            --win-rgb: 20, 20, 20;
+            --taskbar-rgb: 20, 20, 20;
         }
 
         /* Mica Effect / Acrylic */
         .mica-panel {
-            background: var(--mica-bg);
+            background: rgba(var(--win-rgb), var(--ui-alpha));
             backdrop-filter: blur(var(--mica-blur));
             -webkit-backdrop-filter: blur(var(--mica-blur));
             border: 1px solid var(--border-light);
@@ -103,12 +116,14 @@
             transform-origin: center;
             transition: transform 0.15s ease, opacity 0.15s ease, width 0.2s, height 0.2s, top 0.2s, left 0.2s;
             box-shadow: 0 12px 32px rgba(0,0,0,0.3);
-            background: #ffffff;
+            background: rgba(var(--win-rgb), var(--ui-alpha));
             border: 1px solid var(--border-light);
+            backdrop-filter: blur(var(--mica-blur));
+            -webkit-backdrop-filter: blur(var(--mica-blur));
         }
         
         .dark-mode .os-window {
-            background: #202020;
+            /* Handled dynamically by CSS vars to allow proper alpha transparency */
         }
 
         .os-window.minimized {
@@ -173,13 +188,13 @@
             flex: 1;
             position: relative;
             overflow: auto;
-            background: #ffffff;
+            background: transparent;
         }
-        .dark-mode .window-content { background: #202020; }
+        .dark-mode .window-content { background: transparent; }
 
         /* App Specifics */
         .cmd-window {
-            background: #0c0c0c !important;
+            background: rgba(12, 12, 12, var(--ui-alpha)) !important;
             color: #cccccc !important;
             font-family: 'Consolas', 'Courier New', monospace;
             padding: 8px;
@@ -202,17 +217,17 @@
             width: 100%;
             height: 48px;
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             z-index: 9999;
-            background: rgba(243, 243, 243, 0.85);
+            background: rgba(var(--taskbar-rgb), var(--taskbar-alpha));
             backdrop-filter: blur(30px);
             -webkit-backdrop-filter: blur(30px);
             border-top: 1px solid var(--border-light);
             padding: 0 12px;
         }
         
-        .dark-mode #taskbar { background: rgba(32, 32, 32, 0.85); }
+        .dark-mode #taskbar { /* Handled dynamically by CSS vars */ }
 
         .taskbar-center {
             display: flex;
@@ -277,8 +292,8 @@
         #start-menu {
             position: absolute;
             bottom: 60px;
-            left: 50%;
-            transform: translateX(-50%) translateY(20px);
+            left: 12px;
+            transform: translateY(20px);
             width: 640px;
             height: 720px;
             max-width: 95vw;
@@ -291,10 +306,11 @@
             transition: all 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
             display: flex;
             flex-direction: column;
+            background: rgba(var(--win-rgb), var(--ui-alpha));
         }
         
         #start-menu.show {
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0);
             opacity: 1;
             visibility: visible;
         }
@@ -500,6 +516,8 @@
         let highestZ = 100;
         let openApps = {}; // Track open windows
         let activeAppId = null;
+        let globalTransparency = 100;
+        let globalTheme = 'dark'; // 'light', 'dark', 'transparent'
 
         const SVG_ICONS = {
             notepad: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="4" width="32" height="40" rx="4" fill="#4B96E6"/><rect x="8" y="14" width="32" height="30" rx="4" fill="#E6F0FA"/><line x1="14" y1="22" x2="34" y2="22" stroke="#4B96E6" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="28" x2="34" y2="28" stroke="#4B96E6" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="34" x2="26" y2="34" stroke="#4B96E6" stroke-width="2" stroke-linecap="round"/></svg>`,
@@ -544,7 +562,7 @@
                 icon: SVG_ICONS.calc,
                 width: 320, height: 500,
                 content: (id) => `
-                    <div class="flex flex-col h-full bg-slate-50 dark:bg-[#202020] text-gray-900 dark:text-gray-100">
+                    <div class="flex flex-col h-full bg-transparent text-gray-900 dark:text-gray-100">
                         <div class="flex-1 flex flex-col justify-end p-4 pb-0 text-right">
                             <div id="calc-hist-${id}" class="text-sm opacity-60 min-h-[20px]"></div>
                             <div id="calc-disp-${id}" class="text-5xl font-semibold overflow-hidden text-ellipsis mb-2">0</div>
@@ -584,8 +602,8 @@
                 icon: SVG_ICONS.browser,
                 width: 900, height: 600,
                 content: (id) => `
-                    <div class="flex flex-col h-full bg-white dark:bg-[#121212]">
-                        <div class="flex items-center gap-2 p-2 bg-gray-100 dark:bg-[#202020] border-b border-black/10 dark:border-white/10">
+                    <div class="flex flex-col h-full bg-transparent">
+                        <div class="flex items-center gap-2 p-2 bg-black/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10">
                             <button class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded text-gray-700 dark:text-gray-300 transition-colors" onclick="document.getElementById('frame-${id}').contentWindow.history.back()" title="Back">
                                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
                             </button>
@@ -618,28 +636,59 @@
                 id: 'settings',
                 title: 'Settings',
                 icon: SVG_ICONS.settings,
-                width: 700, height: 500,
-                content: () => `
-                    <div class="flex h-full">
+                width: 750, height: 600,
+                content: (id) => `
+                    <div class="flex h-full bg-transparent">
                         <div class="w-48 bg-black/5 dark:bg-white/5 p-4 border-r border-black/10 dark:border-white/10">
                             <div class="font-semibold mb-4 text-sm">Personalization</div>
-                            <div class="p-2 bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded cursor-pointer text-sm font-medium">Colors</div>
+                            <div class="p-2 bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded cursor-pointer text-sm font-medium">Background & Colors</div>
                         </div>
-                        <div class="flex-1 p-8">
-                            <h2 class="text-2xl font-semibold mb-6">Choose your color</h2>
+                        <div class="flex-1 p-8 overflow-y-auto">
+                            <h2 class="text-2xl font-semibold mb-6">Theme Modes</h2>
                             <div class="mb-6">
                                 <label class="block text-sm mb-2">App mode</label>
-                                <select class="p-2 border rounded bg-transparent border-black/20 dark:border-white/20 outline-none w-48" onchange="toggleTheme(this.value)">
-                                    <option value="dark" class="text-black">Dark</option>
-                                    <option value="light" class="text-black">Light</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm mb-2">Desktop Background</label>
                                 <div class="flex gap-2">
-                                    <button class="w-16 h-16 rounded border-2 border-transparent hover:border-blue-500 bg-cover" style="background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2064&auto=format&fit=crop')" onclick="setBg(this.style.backgroundImage)"></button>
-                                    <button class="w-16 h-16 rounded border-2 border-transparent hover:border-blue-500 bg-cover" style="background-image: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop')" onclick="setBg(this.style.backgroundImage)"></button>
-                                    <button class="w-16 h-16 rounded border-2 border-transparent hover:border-blue-500 bg-cover" style="background-image: url('https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=1974&auto=format&fit=crop')" onclick="setBg(this.style.backgroundImage)"></button>
+                                    <button id="btn-theme-light-${id}" class="px-4 py-2 border border-black/20 dark:border-white/20 rounded hover:bg-black/5 dark:hover:bg-white/5 ${globalTheme === 'light' ? 'ring-2 ring-blue-500' : ''}" onclick="setThemeMode('light', '${id}')">Light</button>
+                                    <button id="btn-theme-dark-${id}" class="px-4 py-2 border border-black/20 dark:border-white/20 rounded hover:bg-black/5 dark:hover:bg-white/5 ${globalTheme === 'dark' ? 'ring-2 ring-blue-500' : ''}" onclick="setThemeMode('dark', '${id}')">Dark</button>
+                                    <button id="btn-theme-transparent-${id}" class="px-4 py-2 border border-black/20 dark:border-white/20 rounded hover:bg-black/5 dark:hover:bg-white/5 ${globalTheme === 'transparent' ? 'ring-2 ring-blue-500' : ''}" onclick="setThemeMode('transparent', '${id}')">Transparent</button>
+                                </div>
+                            </div>
+                            
+                            <div id="transparency-container-${id}" class="mb-6 bg-black/5 dark:bg-white/5 p-4 rounded" style="display: ${globalTheme === 'transparent' ? 'block' : 'none'};">
+                                <label class="block text-sm mb-2">Transparency meter (0 to 200)</label>
+                                <div class="flex items-center gap-4">
+                                    <input type="range" id="transparency-slider-${id}" min="0" max="200" value="${globalTransparency}" class="flex-1" oninput="updateTransparency(this.value, '${id}')">
+                                    <span id="transparency-val-${id}" class="text-sm w-8">${globalTransparency}</span>
+                                </div>
+                            </div>
+
+                            <h2 class="text-2xl font-semibold mb-6 mt-8">Background</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm mb-2 opacity-80">Solid Color</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="color" class="w-10 h-10 rounded cursor-pointer bg-transparent border-none p-0" onchange="setBgColor(this.value)">
+                                        <span class="text-xs opacity-60">Pick a color</span>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm mb-2 opacity-80">Image URL</label>
+                                    <input type="text" placeholder="https://..." class="w-full p-2 border rounded bg-transparent border-black/20 dark:border-white/20 text-sm outline-none focus:border-blue-500" onchange="setBgUrl(this.value)">
+                                </div>
+                                
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm mb-2 opacity-80">Upload File</label>
+                                    <input type="file" accept="image/*" class="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-white/10 dark:file:text-white dark:hover:file:bg-white/20" onchange="setBgUpload(this)">
+                                </div>
+                                
+                                <div class="md:col-span-2 mt-2">
+                                    <label class="block text-sm mb-2 opacity-80">Presets</label>
+                                    <div class="flex gap-2">
+                                        <button class="w-16 h-16 rounded border-2 border-transparent hover:border-blue-500 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2064&auto=format&fit=crop')" onclick="setBgUrl('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2064&auto=format&fit=crop')"></button>
+                                        <button class="w-16 h-16 rounded border-2 border-transparent hover:border-blue-500 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop')" onclick="setBgUrl('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop')"></button>
+                                        <button class="w-16 h-16 rounded border-2 border-transparent hover:border-blue-500 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=1974&auto=format&fit=crop')" onclick="setBgUrl('https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=1974&auto=format&fit=crop')"></button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -943,16 +992,65 @@
         }
 
         // Settings Logic
-        function toggleTheme(mode) {
-            if(mode === 'light') {
-                document.body.classList.remove('dark-mode');
-            } else {
+        function setThemeMode(mode, appId) {
+            globalTheme = mode;
+            document.body.classList.remove('dark-mode', 'transparent-mode');
+            
+            const cont = document.getElementById(`transparency-container-${appId}`);
+            if (mode === 'dark') {
                 document.body.classList.add('dark-mode');
+                document.documentElement.style.setProperty('--ui-alpha', '1');
+                document.documentElement.style.setProperty('--taskbar-alpha', '0.85');
+                if(cont) cont.style.display = 'none';
+            } else if (mode === 'light') {
+                document.documentElement.style.setProperty('--ui-alpha', '1');
+                document.documentElement.style.setProperty('--taskbar-alpha', '0.85');
+                if(cont) cont.style.display = 'none';
+            } else if (mode === 'transparent') {
+                document.body.classList.add('dark-mode', 'transparent-mode');
+                if(cont) cont.style.display = 'block';
+                updateTransparency(globalTransparency, appId);
+            }
+            
+            // Highlight active button
+            ['light', 'dark', 'transparent'].forEach(m => {
+                const btn = document.getElementById(`btn-theme-${m}-${appId}`);
+                if(btn) {
+                    if(m === mode) btn.classList.add('ring-2', 'ring-blue-500');
+                    else btn.classList.remove('ring-2', 'ring-blue-500');
+                }
+            });
+        }
+        
+        function updateTransparency(val, appId) {
+            globalTransparency = val;
+            const alpha = Math.max(0, 1 - (val / 200));
+            document.documentElement.style.setProperty('--ui-alpha', alpha.toString());
+            document.documentElement.style.setProperty('--taskbar-alpha', alpha.toString());
+            
+            if (appId) {
+                const valLabel = document.getElementById(`transparency-val-${appId}`);
+                if (valLabel) valLabel.textContent = val;
             }
         }
         
-        function setBg(bgString) {
-            document.documentElement.style.setProperty('--bg-image', bgString);
+        function setBgColor(color) {
+            document.documentElement.style.setProperty('--bg-image', 'none');
+            document.documentElement.style.setProperty('--bg-color', color);
+        }
+
+        function setBgUrl(url) {
+            document.documentElement.style.setProperty('--bg-image', `url('${url}')`);
+        }
+
+        function setBgUpload(input) {
+            if(input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    setBgUrl(e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
         }
 
         // Calculator Logic
