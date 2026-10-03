@@ -601,22 +601,7 @@
                 title: 'Browser',
                 icon: SVG_ICONS.browser,
                 width: 900, height: 600,
-                content: (id) => `
-                    <div class="flex flex-col h-full bg-transparent">
-                        <div class="flex items-center gap-2 p-2 bg-black/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10">
-                            <button class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded text-gray-700 dark:text-gray-300 transition-colors" onclick="document.getElementById('frame-${id}').contentWindow.history.back()" title="Back">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
-                            </button>
-                            <button class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded text-gray-700 dark:text-gray-300 transition-colors" onclick="document.getElementById('frame-${id}').contentWindow.history.forward()" title="Forward">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
-                            </button>
-                            <button class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded text-gray-700 dark:text-gray-300 transition-colors" onclick="document.getElementById('frame-${id}').src = document.getElementById('url-${id}').value" title="Reload">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                            </button>
-                            <input type="text" id="url-${id}" class="flex-1 px-4 py-1.5 bg-white dark:bg-[#1a1a1a] border border-black/20 dark:border-white/20 rounded-full outline-none focus:border-blue-500 text-sm text-gray-900 dark:text-gray-100 shadow-inner" value="https://en.wikipedia.org" onkeydown="if(event.key==='Enter') { let v = this.value; if(!v.startsWith('http')) v = 'https://' + v; this.value = v; document.getElementById('frame-${id}').src = v; }">
-                        </div>
-                        <iframe id="frame-${id}" src="https://en.wikipedia.org" class="flex-1 w-full border-none bg-white"></iframe>
-                    </div>`
+                content: (id) => `<iframe src="https://onex558.github.io/Simple-Scramjet-proxy-static-HTML-/" style="width:100%; height:100%; border:none; background: #fff;"></iframe>`
             },
             'yt2': {
                 id: 'yt2',
@@ -711,8 +696,11 @@
             h = h ? h : 12; 
             m = m < 10 ? '0' + m : m;
             
-            document.getElementById('clock-time').textContent = `${h}:${m} ${ampm}`;
-            document.getElementById('clock-date').textContent = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
+            const timeEl = document.getElementById('clock-time');
+            const dateEl = document.getElementById('clock-date');
+            
+            if (timeEl) timeEl.textContent = `${h}:${m} ${ampm}`;
+            if (dateEl) dateEl.textContent = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
         }
 
         function initDesktop() {
@@ -1165,6 +1153,10 @@
                 </div>
                 <div class="text-xl font-light">Shutting down...</div>
             </div>`;
+            
+            setTimeout(() => {
+                window.location.href = 'https://atlasos-official.github.io/Nova/shutdown';
+            }, 3000);
         }
 
     </script>
