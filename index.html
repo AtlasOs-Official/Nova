@@ -2,1011 +2,895 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wave OS</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nova OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            /* Fluid Blue Abstract Background */
+            --bg-image: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2064&auto=format&fit=crop'); 
+            --bg-color: #0067c0;
+            --win-rgb: 255, 255, 255;
+            --taskbar-rgb: 243, 243, 243;
+            --ui-alpha: 1; /* Fully opaque by default (0% transparency) */
+            --taskbar-alpha: 0.85;
+            --mica-blur: 20px;
+            --accent: #0067c0;
+            --accent-dark: #005a9e;
+            --text-dark: #202020;
+            --text-light: #ffffff;
+            --border-light: rgba(0, 0, 0, 0.1);
+            --border-dark: rgba(255, 255, 255, 0.1);
+        }
+
         body {
             margin: 0;
             overflow: hidden;
-            font-family: 'Inter', sans-serif;
-            background: url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2560&auto=format&fit=crop') no-repeat center center fixed;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background-image: var(--bg-image);
+            background-color: var(--bg-color);
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
             background-size: cover;
-            user-select: none;
+            color: var(--text-dark);
+            user-select: none; /* Prevent text selection during drag */
+            transition: background 0.5s ease;
         }
 
-        /* Power & Boot Screens */
-        #power-screen {
-            position: fixed;
-            inset: 0;
-            background-color: #000;
-            z-index: 20000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.5s ease;
+        .dark-mode {
+            color: var(--text-light);
+            --win-rgb: 32, 32, 32;
+            --taskbar-rgb: 32, 32, 32;
+            --border-light: var(--border-dark);
+        }
+        
+        .transparent-mode {
+            color: var(--text-light);
+            --win-rgb: 20, 20, 20;
+            --taskbar-rgb: 20, 20, 20;
+            --border-light: var(--border-dark);
         }
 
-        .power-btn {
-            background: transparent;
-            color: white;
-            border: 2px solid white;
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
-            font-size: 32px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .power-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
-        }
-
-        #boot-screen {
-            position: fixed;
-            inset: 0;
-            background-color: #000;
-            z-index: 10000;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 1s ease, visibility 1s ease;
-            opacity: 1;
-        }
-
-        .boot-logo {
-            color: white;
-            font-size: 80px;
-            margin-bottom: 40px;
-        }
-
-        .loading-bar-container {
-            width: 200px;
-            height: 4px;
-            background-color: #333;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .loading-bar {
-            width: 0%;
-            height: 100%;
-            background-color: white;
-            border-radius: 4px;
-        }
-
-        .run-boot-anim {
-            animation: loadOS 5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-        }
-
-        @keyframes loadOS {
-            0% { width: 0%; }
-            20% { width: 15%; }
-            50% { width: 60%; }
-            80% { width: 85%; }
-            100% { width: 100%; }
-        }
-
-        /* Glassmorphism utilities */
-        .glass {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-
-        .glass-panel {
-            background: rgba(250, 250, 250, 0.85);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+        /* Mica / Glassmorphism Effect */
+        .mica-panel {
+            background: rgba(var(--win-rgb), var(--ui-alpha));
+            backdrop-filter: blur(var(--mica-blur));
+            -webkit-backdrop-filter: blur(var(--mica-blur));
+            border: 1px solid var(--border-light);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
         }
 
-        /* Top Menu Bar */
-        #menubar {
-            height: 28px;
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 16px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #1d1d1f;
-            z-index: 9999;
-            position: relative;
-        }
-
-        .menu-item {
-            padding: 2px 10px;
-            border-radius: 4px;
-            cursor: default;
-            transition: background 0.1s;
-        }
-
-        .menu-item:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-
-        /* macOS Dock */
-        #dock-container {
+        #desktop {
             position: absolute;
-            bottom: 10px;
-            width: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 48px; /* Leave room for Taskbar */
+            padding: 10px;
             display: flex;
-            justify-content: center;
-            z-index: 9998;
-            pointer-events: none;
-        }
-
-        #dock {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 12px;
-            border-radius: 24px;
-            transition: width 0.3s ease;
-            pointer-events: auto;
-        }
-
-        .dock-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 26px;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-            transform-origin: bottom;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            position: relative;
-        }
-
-        .dock-icon:hover {
-            transform: scale(1.4) translateY(-10px);
-            margin: 0 10px;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 2px;
             z-index: 10;
         }
 
-        .dock-icon.active::after {
-            content: '';
-            position: absolute;
-            bottom: -6px;
-            width: 4px;
-            height: 4px;
-            background: #1d1d1f;
-            border-radius: 50%;
+        .desktop-icon {
+            width: 74px;
+            height: 74px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .desktop-icon:hover { background: rgba(255, 255, 255, 0.2); }
+        .dark-mode .desktop-icon:hover, .transparent-mode .desktop-icon:hover { background: rgba(255, 255, 255, 0.1); }
+        .desktop-icon span {
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            font-size: 0.75rem;
+            margin-top: 4px;
+            text-align: center;
+            line-height: 1.1;
         }
 
-        .hidden-app {
-            display: none !important;
-        }
-
-        /* Window System */
         .os-window {
             position: absolute;
-            top: 100px;
-            left: 150px;
-            border-radius: 12px;
-            display: none;
+            top: 15%;
+            left: 20%;
+            border-radius: 8px;
+            display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-            transition: none; /* Handled smoothly via custom logic */
+            transform-origin: center;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+            background: rgba(var(--win-rgb), var(--ui-alpha));
+            border: 1px solid var(--border-light);
+            backdrop-filter: blur(var(--mica-blur));
+            -webkit-backdrop-filter: blur(var(--mica-blur));
         }
 
-        .os-window.open {
-            display: flex;
+        .os-window.minimized {
+            transform: scale(0.9) translateY(40px);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .os-window.maximized {
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: calc(100% - 48px) !important;
+            border-radius: 0;
         }
 
         .window-header {
-            height: 40px;
+            height: 32px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            padding: 0 16px;
-            border-bottom: 1px solid rgba(0,0,0,0.06);
-            cursor: pointer;
-            position: relative;
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(10px);
-            flex-shrink: 0;
-            user-select: none;
+            padding-left: 12px;
+            background: transparent;
+            cursor: default;
         }
-
-        .traffic-lights {
-            display: flex;
-            gap: 8px;
-            z-index: 2;
-        }
-
-        .traffic-light {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .traffic-light i {
-            font-size: 8px;
-            opacity: 0;
-            transition: opacity 0.1s;
-        }
-        
-        .traffic-lights:hover .traffic-light i { opacity: 0.6; }
-
-        .close { background: #ff5f56; border: 1px solid #e0443e; color: #4d0000; }
-        .minimize { background: #ffbd2e; border: 1px solid #dea123; color: #995700; }
-        .maximize { background: #27c93f; border: 1px solid #1aab29; color: #006500; }
 
         .window-title {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            left: 0;
-            font-size: 13px;
-            font-weight: 600;
-            color: #4a4a4a;
+            font-size: 0.75rem;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             pointer-events: none;
         }
 
-        .window-body {
-            flex: 1;
+        /* Right-aligned Window Controls */
+        .window-controls {
             display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
+            height: 100%;
         }
 
-        /* Specific App Default Sizing */
-        #window-calculator { width: 240px; height: 340px; }
-        #window-browser { width: 900px; height: 600px; max-width: 95vw; max-height: 85vh; }
-        #window-appstore { width: 780px; height: 520px; max-width: 95vw; max-height: 85vh; }
-        #window-terminal { width: 640px; height: 420px; max-width: 95vw; max-height: 85vh; }
-
-        /* Calculator Styles */
-        .calc-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1px;
-            background: #444;
-            flex: 1;
-        }
-        .calc-btn {
-            background: #e0e0e0;
+        .win-btn {
+            width: 46px;
+            height: 100%;
             border: none;
-            font-size: 18px;
-            cursor: pointer;
+            background: transparent;
+            color: inherit;
+            cursor: default;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             transition: background 0.1s;
         }
-        .calc-btn:active { background: #ccc; }
-        .calc-btn.op { background: #ff9f0a; color: white; }
-        .calc-btn.op:active { background: #c97c07; }
-        .calc-btn.top-op { background: #d4d4d2; }
-        .calc-btn.top-op:active { background: #b8b8b8; }
-        .calc-btn.zero { grid-column: span 2; padding-left: 20px; justify-content: flex-start; }
+        .win-btn:hover { background: rgba(0,0,0,0.05); }
+        .dark-mode .win-btn:hover, .transparent-mode .win-btn:hover { background: rgba(255,255,255,0.05); }
         
-        #calc-display {
-            background: #333333;
-            color: white;
-            font-size: 40px;
-            text-align: right;
-            padding: 10px 15px;
-            font-weight: 300;
-            height: 70px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: flex-end;
-            flex-shrink: 0;
+        /* Required: Red close button on hover */
+        .win-btn-close:hover { 
+            background: #e81123 !important; 
+            color: white !important; 
         }
 
-        /* App Store Styles */
-        .app-store-sidebar { width: 200px; border-right: 1px solid rgba(0,0,0,0.1); padding: 20px 10px; flex-shrink: 0; }
-        .app-store-main { flex: 1; padding: 30px; overflow-y: auto; }
-        .app-card {
+        .window-content {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            background: transparent;
+        }
+
+        /* App Specific Styles */
+        .cmd-window {
+            background: rgba(12, 12, 12, var(--ui-alpha)) !important;
+            color: #cccccc !important;
+            font-family: 'Consolas', 'Courier New', monospace;
+            padding: 8px;
+        }
+        .cmd-input {
+            background: transparent;
+            border: none;
+            color: inherit;
+            outline: none;
+            font-family: inherit;
+            flex: 1;
+            margin-left: 4px;
+        }
+
+        #taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 9999;
+            background: rgba(var(--taskbar-rgb), var(--taskbar-alpha));
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-top: 1px solid var(--border-light);
+            padding: 0 12px;
+        }
+
+        /* Left aligned items */
+        .taskbar-left {
             display: flex;
             align-items: center;
-            padding: 16px;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            gap: 16px;
-        }
-        .app-card-icon {
-            width: 64px; height: 64px; border-radius: 14px;
-            display: flex; justify-content: center; align-items: center; font-size: 32px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .app-card-info { flex: 1; }
-        .app-card-btn {
-            background: #f0f0f0; color: #007aff; font-weight: 600; font-size: 13px;
-            padding: 6px 16px; border-radius: 16px; cursor: pointer; transition: all 0.2s; border: none;
-        }
-        .app-card-btn:hover { background: #e0e0e0; }
-        .app-card-btn.installed { background: transparent; border: 1px solid #ccc; color: #888; }
-
-        /* Install Progress Bar */
-        .install-progress-wrapper {
-            width: 60px;
-            height: 28px;
-            background: #e0e0e0;
-            border-radius: 14px;
-            overflow: hidden;
-            display: none;
-        }
-        .install-progress-fill {
+            gap: 4px;
             height: 100%;
-            background: #007aff;
-            width: 0%;
-            transition: width 5s linear;
         }
 
-        /* Terminal specific styles */
-        #term-input {
-            width: 100%;
+        .taskbar-right {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 8px;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
+        .taskbar-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+        }
+        .taskbar-icon:hover { background: rgba(255, 255, 255, 0.5); }
+        .dark-mode .taskbar-icon:hover, .transparent-mode .taskbar-icon:hover { background: rgba(255, 255, 255, 0.1); }
+        
+        .taskbar-icon.open::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 3px;
+            background: #888;
+            border-radius: 2px;
+        }
+        .taskbar-icon.active::after {
+            width: 16px;
+            background: var(--accent);
+        }
 
-        @media (max-width: 768px) {
-            .app-store-sidebar { display: none; }
-            .os-window { width: 95vw !important; left: 2.5vw !important; }
+        /* Custom Nova 4-point star Logo */
+        #start-button { padding: 8px; border-radius: 4px; }
+        .nova-logo {
+            width: 24px;
+            height: 24px;
+            fill: var(--accent);
+        }
+
+        #start-menu {
+            position: absolute;
+            bottom: 60px;
+            left: 12px; /* Left aligned */
+            transform: translateY(20px);
+            width: 640px;
+            height: 720px;
+            max-width: 95vw;
+            max-height: 85vh;
+            border-radius: 8px;
+            padding: 24px 32px;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            background: rgba(var(--win-rgb), var(--ui-alpha));
+        }
+        
+        #start-menu.show {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .search-bar {
+            background: rgba(255,255,255,0.8);
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .dark-mode .search-bar, .transparent-mode .search-bar { background: rgba(0,0,0,0.3); border-color: #444; }
+        .search-bar input { background: transparent; border: none; outline: none; width: 100%; color: inherit; }
+
+        .pinned-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px 8px;
+        }
+
+        .pinned-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .pinned-app:hover { background: rgba(0,0,0,0.05); }
+        .dark-mode .pinned-app:hover, .transparent-mode .pinned-app:hover { background: rgba(255,255,255,0.05); }
+        .pinned-app svg { width: 32px; height: 32px; }
+        .pinned-app span { font-size: 0.75rem; text-align: center; }
+
+        .start-footer {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
-<body>
+<body class="dark-mode">
 
-    <!-- Power Screen (Required for Audio Autoplay) -->
-    <div id="power-screen">
-        <button class="power-btn" onclick="startBootSequence()" title="Power On">
-            <i class="fa-solid fa-power-off"></i>
-        </button>
-        <div class="text-white/50 mt-6 text-sm font-light">Press to Power On Wave OS</div>
-    </div>
+    <!-- Desktop Environment -->
+    <div id="desktop" onclick="closeStartMenu()"></div>
 
-    <!-- Boot Screen -->
-    <div id="boot-screen">
-        <i class="fa-solid fa-water boot-logo"></i>
-        <div class="loading-bar-container">
-            <div id="loading-progress" class="loading-bar"></div>
+    <!-- Start Menu -->
+    <div id="start-menu" class="mica-panel">
+        <div class="search-bar">
+            <svg class="w-4 h-4 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" placeholder="Type here to search">
         </div>
-    </div>
-
-    <!-- Menu Bar -->
-    <nav id="menubar">
-        <div class="flex items-center gap-1 overflow-x-auto whitespace-nowrap hide-scrollbar">
-            <div class="menu-item font-bold text-lg cursor-pointer"><i class="fa-solid fa-water text-blue-600"></i></div>
-            <div class="menu-item font-bold">Wave OS</div>
-            <div class="menu-item hidden sm:block">File</div>
-            <div class="menu-item hidden sm:block">Edit</div>
-            <div class="menu-item hidden sm:block">View</div>
-            <div class="menu-item hidden sm:block">Go</div>
-            <div class="menu-item hidden md:block">Window</div>
-            <div class="menu-item hidden md:block">Help</div>
-        </div>
-        <div class="flex items-center gap-4 shrink-0">
-            <div class="flex gap-4 text-gray-700 items-center">
-                <i class="fa-solid fa-expand cursor-pointer hover:text-black transition" onclick="toggleFullscreen()" title="Toggle Fullscreen"></i>
-                <i class="fa-solid fa-wifi cursor-pointer"></i>
-                <i class="fa-solid fa-battery-three-quarters cursor-pointer"></i>
-                <i class="fa-solid fa-magnifying-glass cursor-pointer"></i>
+        <div class="flex justify-between mb-4"><span class="text-sm font-semibold">Pinned</span></div>
+        <div class="pinned-grid" id="start-pinned-apps"></div>
+        <div class="start-footer mt-auto">
+            <div class="flex items-center gap-3 p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer">
+                <div class="user-avatar">N</div>
+                <span class="text-sm">Nova User</span>
             </div>
-            <div id="clock" class="menu-item font-medium">--:--</div>
+            <!-- Power Off Button triggers 3-second sequence -->
+            <button class="p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer" onclick="closeOS()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </button>
         </div>
-    </nav>
+    </div>
 
-    <!-- Window Container -->
-    <div id="desktop-area" class="relative w-full h-[calc(100vh-28px)]">
+    <!-- Taskbar -->
+    <div id="taskbar">
+        <!-- Left Aligned Icons -->
+        <div class="taskbar-left" id="taskbar-apps">
+            <!-- Custom 4-Point Star Logo -->
+            <div id="start-button" class="taskbar-icon" onclick="toggleStartMenu()">
+                <svg viewBox="0 0 100 100" class="nova-logo">
+                    <!-- 4 Point Star path -->
+                    <path d="M50 0 L60 40 L100 50 L60 60 L50 100 L40 60 L0 50 L40 40 Z" />
+                </svg>
+            </div>
+        </div>
         
-        <!-- App Store Window -->
-        <div id="window-appstore" class="os-window glass-panel">
-            <div class="window-header">
-                <div class="traffic-lights">
-                    <div class="traffic-light close" onclick="closeWindow('appstore')"><i class="fa-solid fa-xmark"></i></div>
-                    <div class="traffic-light minimize" onclick="closeWindow('appstore')"><i class="fa-solid fa-minus"></i></div>
-                    <div class="traffic-light maximize" onclick="toggleMaximize('appstore')"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></div>
-                </div>
-                <div class="window-title">App Store</div>
-            </div>
-            <div class="window-body flex flex-row">
-                <div class="app-store-sidebar bg-white/40">
-                    <div class="text-xl font-bold mb-6 px-2">Discover</div>
-                    <div class="sidebar-item bg-blue-100 text-blue-600 font-medium p-2 rounded-lg mb-2"><i class="fa-solid fa-rocket mr-2"></i> Featured</div>
-                    <div class="sidebar-item hover:bg-black/5 p-2 rounded-lg mb-2 cursor-pointer"><i class="fa-solid fa-list mr-2"></i> Categories</div>
-                    <div class="sidebar-item hover:bg-black/5 p-2 rounded-lg cursor-pointer"><i class="fa-solid fa-rotate mr-2"></i> Updates</div>
-                </div>
-                <div class="app-store-main bg-white/60">
-                    <h1 class="text-3xl font-bold border-b border-black/10 pb-4 mb-4">Recommended for You</h1>
-                    
-                    <!-- Calculator App Card -->
-                    <div class="app-card">
-                        <div class="app-card-icon bg-orange-400 text-white"><i class="fa-solid fa-calculator"></i></div>
-                        <div class="app-card-info">
-                            <div class="text-lg font-bold text-gray-800">Calculator</div>
-                            <div class="text-sm text-gray-500">Perform basic mathematics.</div>
-                        </div>
-                        <button id="install-btn-calculator" class="app-card-btn" onclick="startInstall('calculator')">GET</button>
-                        <div id="install-prog-calculator" class="install-progress-wrapper">
-                            <div id="install-fill-calculator" class="install-progress-fill"></div>
-                        </div>
-                    </div>
-
-                    <!-- Browser App Card -->
-                    <div class="app-card">
-                        <div class="app-card-icon bg-blue-500 text-white"><i class="fa-regular fa-compass"></i></div>
-                        <div class="app-card-info">
-                            <div class="text-lg font-bold text-gray-800">Browser</div>
-                            <div class="text-sm text-gray-500">Surf the web securely.</div>
-                        </div>
-                        <button id="install-btn-browser" class="app-card-btn" onclick="startInstall('browser')">GET</button>
-                        <div id="install-prog-browser" class="install-progress-wrapper">
-                            <div id="install-fill-browser" class="install-progress-fill"></div>
-                        </div>
-                    </div>
-
-                    <!-- Terminal App Card -->
-                    <div class="app-card">
-                        <div class="app-card-icon bg-gray-900 text-white"><i class="fa-solid fa-terminal"></i></div>
-                        <div class="app-card-info">
-                            <div class="text-lg font-bold text-gray-800">Terminal</div>
-                            <div class="text-sm text-gray-500">Command line interface.</div>
-                        </div>
-                        <button id="install-btn-terminal" class="app-card-btn installed" onclick="toggleWindow('terminal')">OPEN</button>
-                    </div>
-
-                </div>
+        <!-- Right Aligned Tray -->
+        <div class="taskbar-right">
+            <div class="flex flex-col items-end gap-0 py-1 cursor-default text-xs" style="line-height: 1.1;">
+                <div id="clock-time">12:00 PM</div>
+                <div id="clock-date">10/24/2026</div>
             </div>
         </div>
-
-        <!-- Calculator Window -->
-        <div id="window-calculator" class="os-window glass-panel" style="background: #333;">
-            <div class="window-header" style="background: #333; border-bottom: none;">
-                <div class="traffic-lights">
-                    <div class="traffic-light close" onclick="closeWindow('calculator')"><i class="fa-solid fa-xmark"></i></div>
-                    <div class="traffic-light minimize" onclick="closeWindow('calculator')"><i class="fa-solid fa-minus"></i></div>
-                    <div class="traffic-light maximize" onclick="toggleMaximize('calculator')"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></div>
-                </div>
-            </div>
-            <div class="window-body">
-                <div id="calc-display">0</div>
-                <div class="calc-grid">
-                    <button class="calc-btn top-op" onclick="calcAction('clear')">AC</button>
-                    <button class="calc-btn top-op" onclick="calcAction('negate')">+/-</button>
-                    <button class="calc-btn top-op" onclick="calcAction('percent')">%</button>
-                    <button class="calc-btn op" onclick="calcAction('/')">÷</button>
-                    
-                    <button class="calc-btn" onclick="calcAppend('7')">7</button>
-                    <button class="calc-btn" onclick="calcAppend('8')">8</button>
-                    <button class="calc-btn" onclick="calcAppend('9')">9</button>
-                    <button class="calc-btn op" onclick="calcAction('*')">×</button>
-                    
-                    <button class="calc-btn" onclick="calcAppend('4')">4</button>
-                    <button class="calc-btn" onclick="calcAppend('5')">5</button>
-                    <button class="calc-btn" onclick="calcAppend('6')">6</button>
-                    <button class="calc-btn op" onclick="calcAction('-')">-</button>
-                    
-                    <button class="calc-btn" onclick="calcAppend('1')">1</button>
-                    <button class="calc-btn" onclick="calcAppend('2')">2</button>
-                    <button class="calc-btn" onclick="calcAppend('3')">3</button>
-                    <button class="calc-btn op" onclick="calcAction('+')">+</button>
-                    
-                    <button class="calc-btn zero" onclick="calcAppend('0')">0</button>
-                    <button class="calc-btn" onclick="calcAppend('.')">.</button>
-                    <button class="calc-btn op" onclick="calcAction('=')">=</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Browser Window -->
-        <div id="window-browser" class="os-window glass-panel">
-            <div class="window-header">
-                <div class="traffic-lights">
-                    <div class="traffic-light close" onclick="closeWindow('browser')"><i class="fa-solid fa-xmark"></i></div>
-                    <div class="traffic-light minimize" onclick="closeWindow('browser')"><i class="fa-solid fa-minus"></i></div>
-                    <div class="traffic-light maximize" onclick="toggleMaximize('browser')"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></div>
-                </div>
-                <div class="flex-1 flex justify-center px-4">
-                    <div class="w-2/3 bg-black/10 rounded-md text-center py-1 text-xs text-gray-600 font-medium overflow-hidden text-ellipsis whitespace-nowrap">
-                        <i class="fa-solid fa-lock text-gray-400 mr-1"></i> https://onex558.github.io/Simple-Scramjet-proxy-static-HTML-/
-                    </div>
-                </div>
-            </div>
-            <div class="window-body" style="background: white;">
-                <!-- Embedded exactly as requested -->
-                <iframe src="https://onex558.github.io/Simple-Scramjet-proxy-static-HTML-/" style="width: 100%; height: 100%; border: none; flex: 1;"></iframe>
-            </div>
-        </div>
-
-        <!-- Terminal Window -->
-        <div id="window-terminal" class="os-window glass-panel" style="background: rgba(30,30,30,0.95); backdrop-filter: blur(20px);">
-            <div class="window-header" style="background: rgba(50,50,50,0.5); border-bottom: 1px solid rgba(0,0,0,0.5);">
-                <div class="traffic-lights">
-                    <div class="traffic-light close" onclick="closeWindow('terminal')"><i class="fa-solid fa-xmark"></i></div>
-                    <div class="traffic-light minimize" onclick="closeWindow('terminal')"><i class="fa-solid fa-minus"></i></div>
-                    <div class="traffic-light maximize" onclick="toggleMaximize('terminal')"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></div>
-                </div>
-                <div class="window-title" style="color: #ccc;">guest — -bash — 80x24</div>
-            </div>
-            <div class="window-body flex flex-col font-mono text-[13px] text-gray-200 p-3 overflow-y-auto cursor-text" style="background: transparent;" onclick="document.getElementById('term-input').focus()">
-                <div class="mb-2 text-gray-400">
-                    Last login: <span id="term-login-time"></span> on ttys000<br>
-                    Welcome to Wave OS terminal. Type 'help' to see available commands.
-                </div>
-                <div id="term-output"></div>
-                <div class="flex items-center mt-1">
-                    <span class="mr-2 font-bold">guest@waveos ~ %</span>
-                    <input type="text" id="term-input" class="flex-1 bg-transparent border-none outline-none text-gray-200 font-mono" autocomplete="off" spellcheck="false" onkeydown="handleTerminalCommand(event)">
-                </div>
-            </div>
-        </div>
-
     </div>
 
-    <div id="dock-container">
-        <nav id="dock" class="glass">
-            <!-- Pre-installed App Store -->
-            <div class="dock-icon text-blue-500 bg-white" onclick="toggleWindow('appstore')" id="dock-appstore" title="App Store">
-                <i class="fa-brands fa-app-store-ios"></i>
-            </div>
-            
-            <!-- Hidden by default until installed -->
-            <div class="dock-icon text-white bg-orange-400 hidden-app" onclick="toggleWindow('calculator')" id="dock-calculator" title="Calculator">
-                <i class="fa-solid fa-calculator"></i>
-            </div>
-            <div class="dock-icon text-white bg-blue-500 hidden-app" onclick="toggleWindow('browser')" id="dock-browser" title="Browser">
-                <i class="fa-regular fa-compass"></i>
-            </div>
-            
-            <!-- Pre-installed Terminal -->
-            <div class="dock-icon text-white bg-gray-900" onclick="toggleWindow('terminal')" id="dock-terminal" title="Terminal">
-                <i class="fa-solid fa-terminal"></i>
-            </div>
-        </nav>
+    <!-- Startup Update Popup -->
+    <div id="update-popup" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mica-panel rounded-lg shadow-2xl p-6 z-[100000] min-w-[320px] text-center transition-opacity duration-300">
+        <h3 class="text-lg font-semibold mb-4" id="update-text">update avalable</h3>
+        <div id="update-buttons" class="flex justify-center gap-4 mt-4">
+            <button class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition" onclick="showUpdateInstructions()">update</button>
+            <button class="px-6 py-2 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded transition" onclick="closeUpdatePopup()">no</button>
+        </div>
+    </div>
+
+    <!-- Shutdown Sequence Container -->
+    <div id="shutdown-screen" class="fixed inset-0 bg-black flex flex-col items-center justify-center text-white z-[999999] opacity-0 pointer-events-none transition-opacity duration-500">
+        <div class="mb-4">
+            <svg viewBox="0 0 100 100" class="w-16 h-16 fill-blue-500 animate-pulse">
+                <path d="M50 0 L60 40 L100 50 L60 60 L50 100 L40 60 L0 50 L40 40 Z" />
+            </svg>
+        </div>
+        <div class="text-xl font-light">Shutting down...</div>
     </div>
 
     <script>
-        // --- Fullscreen Toggle Logic ---
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.error("Error attempting to enable fullscreen:", err.message);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
+        let highestZ = 100;
+        let openApps = {}; 
+        let activeAppId = null;
+        let globalTransparency = 0; // 0 = not transparent, 200 = fully transparent
+        let globalTheme = 'dark'; 
+
+        const SVG_ICONS = {
+            notepad: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="4" width="32" height="40" rx="4" fill="#4B96E6"/><rect x="8" y="14" width="32" height="30" rx="4" fill="#E6F0FA"/><line x1="14" y1="22" x2="34" y2="22" stroke="#4B96E6" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="28" x2="34" y2="28" stroke="#4B96E6" stroke-width="2" stroke-linecap="round"/></svg>`,
+            cmd: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="6" width="40" height="36" rx="4" fill="#202020"/><rect x="4" y="6" width="40" height="10" fill="#404040"/><path d="M12 24L18 30L12 36" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="22" y1="36" x2="30" y2="36" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/></svg>`,
+            calc: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="4" width="32" height="40" rx="4" fill="#E6E6E6"/><rect x="12" y="20" width="6" height="6" rx="1" fill="#CCCCCC"/><rect x="21" y="20" width="6" height="6" rx="1" fill="#CCCCCC"/><rect x="30" y="20" width="6" height="6" rx="1" fill="#4B96E6"/></svg>`,
+            settings: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 33C28.9706 33 33 28.9706 33 24C33 19.0294 28.9706 15 24 15C19.0294 15 15 19.0294 15 24C15 28.9706 19.0294 33 24 33Z" fill="#999999"/><path fill-rule="evenodd" clip-rule="evenodd" d="M24 19C21.2386 19 19 21.2386 19 24C19 26.7614 21.2386 29 24 29ZM24 40C25.1 40 26 39.1 26 38V35.8C27.6 35.4 29.1 34.7 30.4 33.7L32 35.3C32.8 36.1 34.1 36.1 34.8 35.3L37.7 32.4C38.5 31.6 38.5 30.3 37.7 29.5L36.1 27.9C37.1 26.6 37.8 25.1 38.2 23.5H40C41.1 23.5 42 22.6 42 21.5V17.5C42 16.3 41.1 15.5 40 15.5H38.2C37.8 13.9 37.1 12.4 36.1 11.1L37.7 9.5C38.5 8.7 38.5 7.4 37.7 6.6L34.8 3.7C34.1 2.9 32.8 2.9 32 3.7L30.4 5.3C29.1 4.3 27.6 3.6 26 3.2V1C26 -0.1 25.1 -1 24 -1H20C18.8 -1 18 -0.1 18 1V3.2C16.4 3.6 14.9 4.3 13.6 5.3L12 3.7C11.2 2.9 9.9 2.9 9.2 3.7L6.3 6.6C5.5 7.4 5.5 8.7 6.3 9.5L7.9 11.1C6.9 12.4 6.2 13.9 5.8 15.5H4C2.8 15.5 2 16.3 2 17.5V21.5C2 22.6 2.8 23.5 4 23.5H5.8C6.2 25.1 6.9 26.6 7.9 27.9L6.3 29.5C5.5 30.3 5.5 31.6 6.3 32.4L9.2 35.3C9.9 36.1 11.2 36.1 12 35.3L13.6 33.7C14.9 34.7 16.4 35.4 18 35.8V38C18 39.1 18.8 40 20 40H24Z" fill="#666666"/></svg>`,
+            browser: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="20" fill="#0078D7"/><path d="M4 24H44" stroke="#FFFFFF" stroke-width="2"/><path d="M24 4C30 4 34 14 34 24C34 34 30 44 24 44C18 44 14 34 14 24C14 14 18 4 24 4Z" stroke="#FFFFFF" stroke-width="2"/></svg>`,
+            yt2: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="10" width="40" height="28" rx="6" fill="#FF0000"/><path d="M19 17L32 24L19 31V17Z" fill="#FFFFFF"/></svg>`,
+            ajgconnect: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M44 24C44 35 35 44 24 44C19.7 44 15.8 42.6 12.6 40.5L4 44L7.5 35.3C5.3 32.1 4 28.2 4 24C4 12.9 12.9 4 24 4C35 4 44 12.9 44 24Z" fill="#00A884"/><path d="M16 24C16 25 15.1 26 14 26C12.8 26 12 25 12 24C12 22.8 12.8 22 14 22C15.1 22 16 22.8 16 24Z" fill="#FFFFFF"/><path d="M26 24C26 25 25.1 26 24 26C22.8 26 22 25 22 24C22 22.8 22.8 22 24 22C25.1 22 26 22.8 26 24Z" fill="#FFFFFF"/><path d="M36 24C36 25 35.1 26 34 26C32.8 26 32 25 32 24C32 22.8 32.8 22 34 22C35.1 22 36 22.8 36 24Z" fill="#FFFFFF"/></svg>`,
+            winControls: {
+                min: `<svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1"><line x1="0" y1="5" x2="10" y2="5"/></svg>`,
+                max: `<svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1" fill="none"><rect x="0.5" y="0.5" width="9" height="9"/></svg>`,
+                close: `<svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" stroke-width="1"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>`
             }
-        }
-
-        // --- Boot Sequence & Audio ---
-        function startBootSequence() {
-            const powerScreen = document.getElementById('power-screen');
-            powerScreen.style.opacity = '0';
-            setTimeout(() => {
-                powerScreen.style.display = 'none';
-            }, 500);
-
-            const bootScreen = document.getElementById('boot-screen');
-            bootScreen.style.display = 'flex';
-            document.getElementById('loading-progress').classList.add('run-boot-anim');
-
-            setTimeout(() => {
-                try {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    if (AudioContext) {
-                        const audioCtx = new AudioContext();
-                        const bufferSize = audioCtx.sampleRate * 1.5;
-                        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                        const data = buffer.getChannelData(0);
-                        for (let i = 0; i < bufferSize; i++) {
-                            data[i] = Math.random() * 2 - 1;
-                        }
-                        
-                        const noiseSource = audioCtx.createBufferSource();
-                        noiseSource.buffer = buffer;
-                        
-                        const filter = audioCtx.createBiquadFilter();
-                        filter.type = 'lowpass';
-                        filter.frequency.setValueAtTime(1500, audioCtx.currentTime);
-                        filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 1.5);
-                        
-                        const gainNode = audioCtx.createGain();
-                        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                        gainNode.gain.linearRampToValueAtTime(2.0, audioCtx.currentTime + 0.05);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
-                        
-                        noiseSource.connect(filter);
-                        filter.connect(gainNode);
-                        gainNode.connect(audioCtx.destination);
-                        
-                        noiseSource.start();
-                    }
-                } catch(e) {
-                    console.log('Audio synthesis failed:', e);
-                }
-                
-                bootScreen.style.opacity = '0';
-                setTimeout(() => {
-                    bootScreen.style.visibility = 'hidden';
-                    bootScreen.style.display = 'none';
-                }, 1000);
-            }, 5000); 
-        }
-
-        // --- Window Management Variables ---
-        let zIndexCounter = 100;
-        const windowStates = {}; 
-        
-        // --- App Store Logic ---
-        function startInstall(appId) {
-            const btn = document.getElementById(`install-btn-${appId}`);
-            const progWrapper = document.getElementById(`install-prog-${appId}`);
-            const progFill = document.getElementById(`install-fill-${appId}`);
-            
-            if(!btn || !progWrapper || !progFill) return;
-            
-            btn.style.display = 'none';
-            progWrapper.style.display = 'block';
-            void progFill.offsetWidth;
-            progFill.style.width = '100%';
-            
-            setTimeout(() => {
-                progWrapper.style.display = 'none';
-                btn.style.display = 'block';
-                installApp(appId);
-            }, 5000);
-        }
-
-        function installApp(appId) {
-            const dockIcon = document.getElementById(`dock-${appId}`);
-            if(dockIcon) dockIcon.classList.remove('hidden-app');
-            
-            const btn = document.getElementById(`install-btn-${appId}`);
-            if(btn) {
-                btn.innerText = 'OPEN';
-                btn.classList.add('installed');
-                btn.onclick = () => toggleWindow(appId);
-            }
-
-            if(dockIcon) {
-                dockIcon.style.transform = 'scale(1.3) translateY(-10px)';
-                setTimeout(() => dockIcon.style.transform = '', 300);
-            }
-        }
-
-        function toggleWindow(appId) {
-            const win = document.getElementById(`window-${appId}`);
-            const dockIcon = document.getElementById(`dock-${appId}`);
-            
-            if (win.classList.contains('open')) {
-                if (parseInt(win.style.zIndex) === zIndexCounter) {
-                    closeWindow(appId);
-                } else {
-                    bringToFront(win);
-                }
-            } else {
-                win.classList.add('open');
-                if(dockIcon) dockIcon.classList.add('active');
-                
-                if (!win.style.top || windowStates[appId]?.maximized) {
-                    const desktop = document.getElementById('desktop-area');
-                    const dw = desktop.clientWidth;
-                    const dh = desktop.clientHeight;
-                    const ww = win.clientWidth || 700;
-                    const wh = win.clientHeight || 450;
-                    
-                    win.style.top = `${Math.max(10, (dh - wh) / 2 + (Math.random() * 40 - 20))}px`;
-                    win.style.left = `${Math.max(10, (dw - ww) / 2 + (Math.random() * 40 - 20))}px`;
-                }
-                
-                bringToFront(win);
-
-                if (appId === 'terminal') {
-                    setTimeout(() => document.getElementById('term-input').focus(), 100);
-                }
-            }
-        }
-
-        function closeWindow(appId) {
-            const win = document.getElementById(`window-${appId}`);
-            const dockIcon = document.getElementById(`dock-${appId}`);
-            win.classList.remove('open');
-            if(dockIcon) dockIcon.classList.remove('active');
-        }
-
-        function toggleMaximize(appId) {
-            const win = document.getElementById(`window-${appId}`);
-            if (!win) return;
-
-            bringToFront(win);
-
-            if (!windowStates[appId]) {
-                windowStates[appId] = {
-                    top: win.style.top,
-                    left: win.style.left,
-                    width: win.style.width,
-                    height: win.style.height,
-                    borderRadius: win.style.borderRadius,
-                    maximized: false
-                };
-            }
-
-            const state = windowStates[appId];
-
-            if (!state.maximized) {
-                state.top = win.style.top;
-                state.left = win.style.left;
-                state.width = win.style.width || `${win.clientWidth}px`;
-                state.height = win.style.height || `${win.clientHeight}px`;
-                state.borderRadius = win.style.borderRadius;
-
-                win.style.position = 'fixed';
-                win.style.top = '0px';
-                win.style.left = '0px';
-                win.style.width = '100vw';
-                win.style.height = '100vh';
-                win.style.borderRadius = '0px';
-                win.style.zIndex = '9999';
-                state.maximized = true;
-            } else {
-                win.style.position = 'absolute';
-                win.style.top = state.top;
-                win.style.left = state.left;
-                win.style.width = state.width;
-                win.style.height = state.height;
-                win.style.borderRadius = state.borderRadius || '12px';
-                state.maximized = false;
-                bringToFront(win);
-            }
-        }
-
-        function bringToFront(element) {
-            const appId = element.id.replace('window-', '');
-            if (windowStates[appId] && windowStates[appId].maximized) {
-                element.style.zIndex = '9999';
-                return;
-            }
-            zIndexCounter++;
-            element.style.zIndex = zIndexCounter;
-        }
-
-        // Make all windows draggable
-        const windows = document.querySelectorAll('.os-window');
-        windows.forEach(win => {
-            win.addEventListener('mousedown', () => bringToFront(win));
-            win.addEventListener('touchstart', () => bringToFront(win), {passive: true});
-            const header = win.querySelector('.window-header');
-            makeDraggable(win, header);
-        });
-
-        function makeDraggable(element, handle) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            
-            handle.onmousedown = dragMouseDown;
-            handle.addEventListener('touchstart', dragTouchStart, {passive: false});
-
-            function dragMouseDown(e) {
-                if(e.target.closest('.traffic-lights')) return;
-                const appId = element.id.replace('window-', '');
-                if (windowStates[appId] && windowStates[appId].maximized) return;
-                e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-                bringToFront(element);
-            }
-
-            function dragTouchStart(e) {
-                if(e.target.closest('.traffic-lights')) return;
-                const appId = element.id.replace('window-', '');
-                if (windowStates[appId] && windowStates[appId].maximized) return;
-                const touch = e.touches[0];
-                pos3 = touch.clientX;
-                pos4 = touch.clientY;
-                document.addEventListener('touchend', closeDragElement);
-                document.addEventListener('touchmove', elementTouchDrag, {passive: false});
-                bringToFront(element);
-            }
-
-            function elementDrag(e) {
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                updatePosition();
-            }
-
-            function elementTouchDrag(e) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                pos1 = pos3 - touch.clientX;
-                pos2 = pos4 - touch.clientY;
-                pos3 = touch.clientX;
-                pos4 = touch.clientY;
-                updatePosition();
-            }
-
-            function updatePosition() {
-                let newTop = element.offsetTop - pos2;
-                let newLeft = element.offsetLeft - pos1;
-                if (newTop < 0) newTop = 0;
-                element.style.top = newTop + "px";
-                element.style.left = newLeft + "px";
-            }
-
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-                document.removeEventListener('touchend', closeDragElement);
-                document.removeEventListener('touchmove', elementTouchDrag);
-            }
-        }
-
-        // --- Terminal Logic ---
-        document.getElementById('term-login-time').innerText = new Date().toString().substring(0, 24);
-        
-        function handleTerminalCommand(e) {
-            if (e.key === 'Enter') {
-                const inputElement = e.target;
-                const cmdString = inputElement.value.trim();
-                const outputDiv = document.getElementById('term-output');
-                
-                const logEntry = document.createElement('div');
-                logEntry.innerHTML = `<span class="font-bold">guest@waveos ~ %</span> ${cmdString.replace(/</g, '&lt;')}`;
-                outputDiv.appendChild(logEntry);
-                
-                if (cmdString !== '') {
-                    const parts = cmdString.split(' ');
-                    const command = parts[0].toLowerCase();
-                    const args = parts.slice(1);
-                    
-                    const response = document.createElement('div');
-                    response.className = 'mb-1 text-gray-300';
-                    
-                    switch (command) {
-                        case 'help':
-                            response.innerHTML = `Available commands:<br>
-                                &nbsp;&nbsp;help&nbsp;&nbsp;&nbsp;&nbsp;- Show this help message<br>
-                                &nbsp;&nbsp;echo&nbsp;&nbsp;&nbsp;&nbsp;- Print text to terminal<br>
-                                &nbsp;&nbsp;date&nbsp;&nbsp;&nbsp;&nbsp;- Show current date and time<br>
-                                &nbsp;&nbsp;whoami&nbsp;&nbsp;- Display current user<br>
-                                &nbsp;&nbsp;clear&nbsp;&nbsp;&nbsp;- Clear the terminal screen`;
-                            outputDiv.appendChild(response);
-                            break;
-                        case 'echo':
-                            response.innerText = args.join(' ');
-                            outputDiv.appendChild(response);
-                            break;
-                        case 'date':
-                            response.innerText = new Date().toString();
-                            outputDiv.appendChild(response);
-                            break;
-                        case 'whoami':
-                            response.innerText = 'guest';
-                            outputDiv.appendChild(response);
-                            break;
-                        case 'clear':
-                            outputDiv.innerHTML = '';
-                            break;
-                        default:
-                            response.innerText = `-bash: ${command}: command not found`;
-                            outputDiv.appendChild(response);
-                    }
-                }
-                
-                inputElement.value = '';
-                const termContent = outputDiv.parentElement;
-                termContent.scrollTop = termContent.scrollHeight;
-            }
-        }
-
-        // --- Calculator Logic ---
-        let calcValue = '0';
-        let calcFirstOperand = null;
-        let calcOperator = null;
-        let calcWaitingForSecondOperand = false;
-
-        function updateCalcDisplay() {
-            let displayVal = calcValue;
-            if (displayVal.length > 9) {
-                displayVal = parseFloat(displayVal).toPrecision(9);
-            }
-            document.getElementById('calc-display').innerText = displayVal;
-        }
-
-        function calcAppend(digit) {
-            if (calcWaitingForSecondOperand) {
-                calcValue = digit;
-                calcWaitingForSecondOperand = false;
-            } else {
-                calcValue = calcValue === '0' ? digit : calcValue + digit;
-            }
-            updateCalcDisplay();
-        }
-
-        function calcAction(action) {
-            const inputValue = parseFloat(calcValue);
-
-            if (action === 'clear') {
-                calcValue = '0';
-                calcFirstOperand = null;
-                calcOperator = null;
-                calcWaitingForSecondOperand = false;
-            } else if (action === 'negate') {
-                calcValue = String(inputValue * -1);
-            } else if (action === 'percent') {
-                calcValue = String(inputValue / 100);
-            } else if (action === '=') {
-                if (calcOperator && calcFirstOperand != null) {
-                    const result = performCalculation[calcOperator](calcFirstOperand, inputValue);
-                    calcValue = String(result);
-                    calcFirstOperand = result;
-                    calcOperator = null;
-                    calcWaitingForSecondOperand = true;
-                }
-            } else { 
-                if (calcOperator && calcWaitingForSecondOperand) {
-                    calcOperator = action;
-                    return;
-                }
-                
-                if (calcFirstOperand == null && !isNaN(inputValue)) {
-                    calcFirstOperand = inputValue;
-                } else if (calcOperator) {
-                    const result = performCalculation[calcOperator](calcFirstOperand, inputValue);
-                    calcValue = String(result);
-                    calcFirstOperand = result;
-                }
-                
-                calcOperator = action;
-                calcWaitingForSecondOperand = true;
-            }
-            updateCalcDisplay();
-        }
-
-        const performCalculation = {
-            '/': (first, second) => first / second,
-            '*': (first, second) => first * second,
-            '+': (first, second) => first + second,
-            '-': (first, second) => first - second,
         };
 
-        // --- Clock Update Logic ---
+        const appRegistry = {
+            'calc': {
+                id: 'calc', title: 'Calculator', icon: SVG_ICONS.calc, width: 320, height: 500,
+                content: (id) => `
+                    <div class="flex flex-col h-full bg-transparent text-gray-900 dark:text-gray-100 transparent-mode:text-gray-100 p-2">
+                        <div class="flex-1 flex flex-col justify-end text-right">
+                            <div id="calc-hist-${id}" class="text-sm opacity-60 min-h-[20px]"></div>
+                            <div id="calc-disp-${id}" class="text-5xl font-semibold overflow-hidden text-ellipsis mb-2">0</div>
+                        </div>
+                        <div class="grid grid-cols-4 gap-1 h-[320px]">
+                            <button class="text-inherit bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded" onclick="calcAction('${id}','C')">C</button>
+                            <button class="text-inherit bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded" onclick="calcAction('${id}','CE')">CE</button>
+                            <button class="text-inherit bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded" onclick="calcAction('${id}','DEL')">⌫</button>
+                            <button class="text-inherit bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded text-lg" onclick="calcAction('${id}','/')">÷</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','7')">7</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','8')">8</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','9')">9</button>
+                            <button class="text-inherit bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded text-lg" onclick="calcAction('${id}','*')">×</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','4')">4</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','5')">5</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','6')">6</button>
+                            <button class="text-inherit bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded text-lg" onclick="calcAction('${id}','-')">−</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','1')">1</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','2')">2</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','3')">3</button>
+                            <button class="text-inherit bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 rounded text-lg" onclick="calcAction('${id}','+')">+</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','±')">±</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','0')">0</button>
+                            <button class="text-inherit bg-white dark:bg-white/10 hover:bg-black/5 dark:hover:bg-white/20 rounded font-semibold" onclick="calcAction('${id}','.')">.</button>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white rounded text-lg" onclick="calcAction('${id}','=')">=</button>
+                        </div>
+                    </div>`
+            },
+            'notepad': {
+                id: 'notepad', title: 'Notepad', icon: SVG_ICONS.notepad, width: 600, height: 400,
+                content: () => `<textarea class="w-full h-full bg-transparent text-inherit p-2 outline-none resize-none" placeholder="Type something..."></textarea>`
+            },
+            'settings': {
+                id: 'settings', title: 'Settings', icon: SVG_ICONS.settings, width: 700, height: 500,
+                content: (id) => `
+                    <div class="p-8 h-full overflow-auto">
+                        <h2 class="text-2xl mb-4 font-semibold">Settings</h2>
+                        <label class="block text-sm mb-2">Theme Mode</label>
+                        <div class="flex gap-2 mb-4">
+                            <button id="btn-theme-light-${id}" class="px-4 py-2 border border-black/20 dark:border-white/20 rounded hover:bg-black/5 ${globalTheme === 'light' ? 'ring-2 ring-blue-500' : ''}" onclick="setThemeMode('light', '${id}')">Light</button>
+                            <button id="btn-theme-dark-${id}" class="px-4 py-2 border border-black/20 dark:border-white/20 rounded hover:bg-black/5 ${globalTheme === 'dark' ? 'ring-2 ring-blue-500' : ''}" onclick="setThemeMode('dark', '${id}')">Dark</button>
+                            <button id="btn-theme-transparent-${id}" class="px-4 py-2 border border-black/20 dark:border-white/20 rounded hover:bg-black/5 ${globalTheme === 'transparent' ? 'ring-2 ring-blue-500' : ''}" onclick="setThemeMode('transparent', '${id}')">Transparent</button>
+                        </div>
+                        
+                        <div id="transparency-container-${id}" class="mb-6 bg-black/5 dark:bg-white/5 p-4 rounded" style="display: ${globalTheme === 'transparent' ? 'block' : 'none'};">
+                            <label class="block text-sm mb-2">Transparency meter (0 to 200)</label>
+                            <div class="flex items-center gap-4">
+                                <input type="range" id="transparency-slider-${id}" min="0" max="200" value="${globalTransparency}" class="flex-1" oninput="updateTransparency(this.value, '${id}')">
+                                <span id="transparency-val-${id}" class="text-sm w-8">${globalTransparency}</span>
+                            </div>
+                        </div>
+
+                        <label class="block text-sm mb-2 mt-4">Background Image URL</label>
+                        <input type="text" class="w-full p-2 border rounded bg-transparent border-black/20 dark:border-white/20" placeholder="https://..." onchange="setBgUrl(this.value)">
+                    </div>`
+            },
+            'cmd': {
+                id: 'cmd', title: 'Command Prompt', icon: SVG_ICONS.cmd, width: 650, height: 400,
+                content: (id) => `
+                    <div class="w-full h-full cmd-window flex flex-col cursor-text" onclick="document.getElementById('cmd-in-${id}').focus()">
+                        <div id="cmd-out-${id}" class="flex-1 overflow-y-auto whitespace-pre-wrap">Nova OS [Version 11.0.0]<br>(c) Nova Corporation. All rights reserved.<br><br></div>
+                        <div class="flex items-center">
+                            <span>C:\\Users\\Nova></span>
+                            <input type="text" id="cmd-in-${id}" class="cmd-input" autocomplete="off" onkeydown="handleCmd(event, '${id}')">
+                        </div>
+                    </div>`
+            },
+            'browser': {
+                id: 'browser', title: 'Browser', icon: SVG_ICONS.browser, width: 900, height: 600,
+                content: () => `<iframe src="https://onex558.github.io/Simple-Scramjet-proxy-static-HTML-/" style="width:100%; height:100%; border:none; background: #fff;"></iframe>`
+            },
+            'yt2': {
+                id: 'yt2', title: 'YT 2', icon: SVG_ICONS.yt2, width: 950, height: 650,
+                content: () => `<iframe src="https://atlasos-official.github.io/Galaxy/yt2" style="width:100%; height:100%; border:none; background: #fff;"></iframe>`
+            },
+            'ajgconnect': {
+                id: 'ajgconnect', title: 'AJG-Connect', icon: SVG_ICONS.ajgconnect, width: 850, height: 700,
+                content: () => `<iframe src="https://atlasos-official.github.io/Galaxy/chats" style="width:100%; height:100%; border:none; background: #fff;"></iframe>`
+            }
+        };
+
+        window.onload = () => {
+            initDesktop();
+            updateClock();
+            setInterval(updateClock, 1000);
+        };
+
         function updateClock() {
             const now = new Date();
-            const options = { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' };
-            const timeString = now.toLocaleDateString('en-US', options).replace(/,/g, '');
-            document.getElementById('clock').textContent = timeString;
+            let h = now.getHours();
+            let m = now.getMinutes();
+            let ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12; h = h ? h : 12; 
+            m = m < 10 ? '0' + m : m;
+            document.getElementById('clock-time').textContent = `${h}:${m} ${ampm}`;
+            document.getElementById('clock-date').textContent = `${now.getMonth()+1}/${now.getDate()}/${now.getFullYear()}`;
         }
-        setInterval(updateClock, 1000);
-        updateClock();
 
+        function initDesktop() {
+            const desktop = document.getElementById('desktop');
+            const startPins = document.getElementById('start-pinned-apps');
+            
+            Object.values(appRegistry).forEach(app => {
+                // Add to Desktop
+                const dIcon = document.createElement('div');
+                dIcon.className = 'desktop-icon';
+                dIcon.ondblclick = () => openApp(app.id);
+                dIcon.innerHTML = `${app.icon}<span>${app.title}</span>`;
+                desktop.appendChild(dIcon);
+                
+                // Add to Start Menu
+                const pIcon = document.createElement('div');
+                pIcon.className = 'pinned-app';
+                pIcon.onclick = () => { openApp(app.id); closeStartMenu(); };
+                pIcon.innerHTML = `${app.icon}<span>${app.title}</span>`;
+                startPins.appendChild(pIcon);
+            });
+        }
+
+        function toggleStartMenu() {
+            document.getElementById('start-menu').classList.toggle('show');
+        }
+        function closeStartMenu() {
+            document.getElementById('start-menu').classList.remove('show');
+        }
+
+        function openApp(appId) {
+            if (openApps[appId]) {
+                bringToFront(appId);
+                const win = document.getElementById(`win-${appId}`);
+                if (win.classList.contains('minimized')) toggleMinimize(appId);
+                return;
+            }
+
+            const app = appRegistry[appId];
+            const win = document.createElement('div');
+            win.id = `win-${appId}`;
+            win.className = 'os-window';
+            win.style.width = `${app.width}px`;
+            win.style.height = `${app.height}px`;
+            
+            const offset = (Object.keys(openApps).length * 30);
+            win.style.top = `max(5%, calc(50% - ${app.height/2}px + ${offset}px))`;
+            win.style.left = `max(5%, calc(50% - ${app.width/2}px + ${offset}px))`;
+            
+            win.innerHTML = `
+                <div class="window-header" onmousedown="bringToFront('${appId}')">
+                    <div class="window-title"><div class="w-4 h-4">${app.icon}</div>${app.title}</div>
+                    <div class="window-controls">
+                        <button class="win-btn" onclick="toggleMinimize('${appId}')">${SVG_ICONS.winControls.min}</button>
+                        <button class="win-btn" onclick="toggleMaximize('${appId}')">${SVG_ICONS.winControls.max}</button>
+                        <button class="win-btn win-btn-close" onclick="closeApp('${appId}')">${SVG_ICONS.winControls.close}</button>
+                    </div>
+                </div>
+                <div class="window-content" onmousedown="bringToFront('${appId}')">
+                    ${app.content(appId)}
+                </div>
+            `;
+            
+            document.body.appendChild(win);
+            openApps[appId] = { isMaximized: false };
+            addTaskbarPin(appId);
+            bringToFront(appId);
+            if(appId === 'cmd') setTimeout(() => document.getElementById(`cmd-in-${appId}`).focus(), 50);
+        }
+
+        function closeApp(appId) {
+            const win = document.getElementById(`win-${appId}`);
+            if(!win) return;
+            win.style.opacity = '0';
+            win.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                win.remove();
+                delete openApps[appId];
+                removeTaskbarPin(appId);
+            }, 150);
+        }
+
+        function toggleMinimize(appId) {
+            const win = document.getElementById(`win-${appId}`);
+            const pin = document.getElementById(`pin-${appId}`);
+            if (win.classList.contains('minimized')) {
+                win.classList.remove('minimized');
+                bringToFront(appId);
+            } else {
+                win.classList.add('minimized');
+                pin.classList.remove('active');
+            }
+        }
+        
+        function toggleMaximize(appId) {
+            const win = document.getElementById(`win-${appId}`);
+            const state = openApps[appId];
+            if (state.isMaximized) {
+                win.classList.remove('maximized');
+                state.isMaximized = false;
+            } else {
+                win.classList.add('maximized');
+                state.isMaximized = true;
+            }
+            bringToFront(appId);
+        }
+
+        function bringToFront(appId) {
+            const win = document.getElementById(`win-${appId}`);
+            if(!win) return;
+            highestZ++;
+            win.style.zIndex = highestZ;
+            activeAppId = appId;
+            
+            document.querySelectorAll('.taskbar-icon.open').forEach(p => p.classList.remove('active'));
+            const pin = document.getElementById(`pin-${appId}`);
+            if(pin && !win.classList.contains('minimized')) pin.classList.add('active');
+        }
+
+        function addTaskbarPin(appId) {
+            const tApps = document.getElementById('taskbar-apps');
+            const pin = document.createElement('div');
+            pin.id = `pin-${appId}`;
+            pin.className = 'taskbar-icon open active';
+            pin.innerHTML = `<div style="transform: scale(0.65)">${appRegistry[appId].icon}</div>`;
+            pin.onclick = () => {
+                const win = document.getElementById(`win-${appId}`);
+                if (win.style.zIndex == highestZ && !win.classList.contains('minimized')) {
+                    toggleMinimize(appId);
+                } else {
+                    if (win.classList.contains('minimized')) toggleMinimize(appId);
+                    bringToFront(appId);
+                }
+            };
+            tApps.appendChild(pin);
+        }
+
+        function removeTaskbarPin(appId) {
+            const pin = document.getElementById(`pin-${appId}`);
+            if (pin) pin.remove();
+        }
+
+        let activeDragWin = null;
+        let dragOffsetX = 0, dragOffsetY = 0;
+
+        document.addEventListener('mousedown', (e) => {
+            const header = e.target.closest('.window-header');
+            if (header && !e.target.closest('.window-controls')) {
+                activeDragWin = header.closest('.os-window');
+                const appId = activeDragWin.id.replace('win-', '');
+                
+                if (openApps[appId].isMaximized) toggleMaximize(appId);
+                
+                const rect = activeDragWin.getBoundingClientRect();
+                dragOffsetX = e.clientX - rect.left;
+                dragOffsetY = e.clientY - rect.top;
+                document.body.style.userSelect = 'none'; // Prevent text highlighting
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (activeDragWin) {
+                let newX = e.clientX - dragOffsetX;
+                let newY = e.clientY - dragOffsetY;
+                if (newY < 0) newY = 0; // Lock to top of screen
+                activeDragWin.style.left = newX + 'px';
+                activeDragWin.style.top = newY + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            activeDragWin = null;
+            document.body.style.userSelect = '';
+        });
+
+        function setThemeMode(mode, appId) {
+            globalTheme = mode;
+            document.body.classList.remove('dark-mode', 'transparent-mode');
+            const cont = document.getElementById(`transparency-container-${appId}`);
+            
+            if (mode === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.documentElement.style.setProperty('--ui-alpha', '1');
+                if(cont) cont.style.display = 'none';
+            } else if (mode === 'light') {
+                document.documentElement.style.setProperty('--ui-alpha', '1');
+                if(cont) cont.style.display = 'none';
+            } else if (mode === 'transparent') {
+                document.body.classList.add('transparent-mode');
+                if(cont) cont.style.display = 'block';
+                updateTransparency(globalTransparency, appId);
+            }
+            
+            ['light', 'dark', 'transparent'].forEach(m => {
+                const btn = document.getElementById(`btn-theme-${m}-${appId}`);
+                if(btn) {
+                    if(m === mode) btn.classList.add('ring-2', 'ring-blue-500');
+                    else btn.classList.remove('ring-2', 'ring-blue-500');
+                }
+            });
+        }
+        
+        function updateTransparency(val, appId) {
+            globalTransparency = val;
+            // Map 0 to alpha 1 (opaque), 200 to alpha 0 (fully transparent)
+            const alpha = Math.max(0, 1 - (val / 200));
+            document.documentElement.style.setProperty('--ui-alpha', alpha.toString());
+            document.documentElement.style.setProperty('--taskbar-alpha', alpha.toString());
+            const valLabel = document.getElementById(`transparency-val-${appId}`);
+            if (valLabel) valLabel.textContent = val;
+        }
+
+        function setBgUrl(url) {
+            if(url) document.documentElement.style.setProperty('--bg-image', `url('${url}')`);
+        }
+
+        function handleCmd(e, appId) {
+            if (e.key === 'Enter') {
+                const input = e.target;
+                const cmd = input.value.trim();
+                input.value = '';
+                const out = document.getElementById(`cmd-out-${appId}`);
+                out.innerHTML += `C:\\Users\\Nova> ${cmd}<br>`;
+                
+                const lcmd = cmd.toLowerCase();
+                if (lcmd === 'cls') {
+                    out.innerHTML = ``;
+                } else if (lcmd === 'update') {
+                    // Start the 10-second wave OS update sequence
+                    const wantsUpdate = window.confirm("do you want to update to wave os?");
+                    if (wantsUpdate) {
+                        input.disabled = true; // Lock input
+                        const loadingBar = document.createElement("div");
+                        loadingBar.textContent = "Updating: [--------------------] 0%";
+                        out.appendChild(loadingBar);
+                        
+                        let progress = 0;
+                        const totalSteps = 20; 
+                        
+                        const updateInterval = setInterval(() => {
+                            progress++;
+                            const filled = "█".repeat(progress);
+                            const empty = "-".repeat(totalSteps - progress);
+                            const percentage = Math.floor((progress / totalSteps) * 100);
+                            
+                            loadingBar.textContent = `Updating: [${filled}${empty}] ${percentage}%`;
+                            out.parentElement.scrollTop = out.parentElement.scrollHeight;
+
+                            if (progress >= totalSteps) {
+                                clearInterval(updateInterval);
+                                loadingBar.textContent += " Complete! Redirecting...";
+                                setTimeout(() => {
+                                    window.location.href = "https://ajgplayz-studio.github.io/ajg-domains/wave";
+                                }, 500);
+                            }
+                        }, 500);
+                        return; // Prevent adding extra newline at bottom
+                    } else {
+                        closeApp(appId);
+                        return;
+                    }
+                } else if (cmd !== '') {
+                    out.innerHTML += `'${cmd}' is not recognized as an internal or external command.<br>`;
+                }
+                
+                out.innerHTML += `<br>`;
+                out.parentElement.scrollTop = out.parentElement.scrollHeight;
+            }
+        }
+
+        let calcState = { val1: '', op: null, val2: '', startNew: false };
+        function calcAction(id, action) {
+            const disp = document.getElementById(`calc-disp-${id}`);
+            const hist = document.getElementById(`calc-hist-${id}`);
+            
+            if (action === 'C') {
+                calcState = { val1: '', op: null, val2: '', startNew: false };
+                disp.textContent = '0';
+                hist.textContent = '';
+                return;
+            }
+            if (action === 'CE') { disp.textContent = '0'; return; }
+            if (action === 'DEL') {
+                if(calcState.startNew) return;
+                disp.textContent = disp.textContent.length > 1 ? disp.textContent.slice(0, -1) : '0';
+                return;
+            }
+            if (['/','*','-','+'].includes(action)) {
+                calcState.val1 = disp.textContent;
+                calcState.op = action;
+                calcState.startNew = true;
+                hist.textContent = `${calcState.val1} ${action === '*' ? '×' : action === '/' ? '÷' : action}`;
+                return;
+            }
+            if (action === '=') {
+                if(!calcState.op) return;
+                calcState.val2 = disp.textContent;
+                let v1 = parseFloat(calcState.val1);
+                let v2 = parseFloat(calcState.val2);
+                let res = 0;
+                switch(calcState.op) {
+                    case '+': res = v1 + v2; break;
+                    case '-': res = v1 - v2; break;
+                    case '*': res = v1 * v2; break;
+                    case '/': res = v2 !== 0 ? v1 / v2 : 'Error'; break;
+                }
+                disp.textContent = typeof res === 'number' ? Math.round(res * 1e10) / 1e10 : res;
+                hist.textContent += ` ${calcState.val2} =`;
+                calcState.startNew = true;
+                calcState.op = null;
+                return;
+            }
+            
+            let current = disp.textContent;
+            if (calcState.startNew || current === '0' || current === 'Error') {
+                current = action === '.' ? '0.' : action;
+                calcState.startNew = false;
+            } else {
+                if(action === '.' && current.includes('.')) return;
+                current += action;
+            }
+            disp.textContent = current;
+        }
+        
+        function closeOS() {
+            closeStartMenu();
+            const sd = document.getElementById('shutdown-screen');
+            sd.classList.remove('pointer-events-none');
+            sd.style.opacity = '1';
+            setTimeout(() => {
+                window.location.href = 'https://atlasos-official.github.io/Nova/shutdown';
+            }, 3000);
+        }
+
+        function closeUpdatePopup() {
+            const popup = document.getElementById('update-popup');
+            if (popup) {
+                popup.style.opacity = '0';
+                setTimeout(() => popup.remove(), 300);
+            }
+        }
+
+        function showUpdateInstructions() {
+            const textEl = document.getElementById('update-text');
+            const btnEl = document.getElementById('update-buttons');
+            if (textEl && btnEl) {
+                textEl.innerHTML = 'HOW TO UPDATE<br>1.open command prompt ON OS NOT WINDOWS<br>2. type update';
+                textEl.className = 'text-left text-sm mb-4 font-normal leading-relaxed';
+                btnEl.innerHTML = `<button class="px-6 py-2 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded transition w-full" onclick="closeUpdatePopup()">Close</button>`;
+            }
+        }
     </script>
 </body>
 </html>
